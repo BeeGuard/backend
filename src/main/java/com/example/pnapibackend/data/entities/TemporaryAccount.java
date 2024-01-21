@@ -1,28 +1,22 @@
 package com.example.pnapibackend.data.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NonNull;
 
+import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.UUID;
+import java.util.Set;
 
 @Entity
 @Data
-@NoArgsConstructor
-@Table(name = "account")
-public class Account {
-
+@Table(name = "temporary_account")
+public class TemporaryAccount {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+    @Column(name = "email", unique = true)
     @NonNull
-    @Column(unique = true, name = "email")
     private String email;
-
-    @NonNull
-    @Column(name = "password")
-    private String password;
 
     @NonNull
     @Column(name = "name")
@@ -33,15 +27,20 @@ public class Account {
     private String countryCode;
 
     @NonNull
+    @Column(name = "auth_code")
+    private int authCode;
+
+    @NonNull
+    @Column(name = "expiration")
+    private LocalDateTime expiration;
+
+    @NonNull
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
-            name = "account_roles",
+            name = "temp_account_roles",
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Collection<Role> roles;
 
-    private void setId(){
-        //do nothing
-    }
 }
