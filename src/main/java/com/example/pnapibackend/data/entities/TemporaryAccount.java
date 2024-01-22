@@ -47,4 +47,7 @@ public class TemporaryAccount {
     )
     private Collection<Role> roles;
 
+    public void incrementUsage() {
+        this.usage++;
+    }
 }
