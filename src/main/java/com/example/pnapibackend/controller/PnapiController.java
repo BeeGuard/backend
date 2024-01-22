@@ -1,5 +1,6 @@
 package com.example.pnapibackend.controller;
 
+import com.example.pnapibackend.configuration.SecurityConfig;
 import com.example.pnapibackend.data.entities.Account;
 import com.example.pnapibackend.data.entities.Role;
 import com.example.pnapibackend.data.entities.TemporaryAccount;
@@ -14,10 +15,12 @@ import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.register.RegisterRequest;
 import com.example.pnapibackend.service.TemporaryAccountService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,19 +40,24 @@ public class PnapiController {
     private RoleRepository roleRepository;
     private final int MAX_USAGE;
 
+    private ApplicationContext context;
+
 
     public PnapiController(
             AccountRepository accountRepository,
             TemporaryAccountRepository temporaryAccountRepository,
             TemporaryAccountService temporaryAccountService,
             RoleRepository roleRepository,
-            @Value("${app.temporary_account.MAX_USAGE}") int maxUsage
+            @Value("${app.temporary_account.MAX_USAGE}") int maxUsage,
+            ApplicationContext applicationContext
+
     ){
         this.accountRepository = accountRepository;
         this.temporaryAccountRepository = temporaryAccountRepository;
         this.temporaryAccountService = temporaryAccountService;
         this.roleRepository = roleRepository;
         this.MAX_USAGE = maxUsage;
+        this.context = applicationContext;
     }
 
 
@@ -95,19 +103,31 @@ public class PnapiController {
         try {
             TemporaryAccount temporaryAccount = temporaryAccountRepository
                     .findTemporaryAccountByEmail(registerRequest.getEmail()).orElseThrow();
-            if(temporaryAccount.getExpiration().isAfter(LocalDateTime.now())
-                    || temporaryAccount.getUsage() > 5) {
 
+            if(temporaryAccount.getExpiration().isAfter(LocalDateTime.now())
+                    || temporaryAccount.getUsage() >= MAX_USAGE) {
+                temporaryAccountRepository.delete(temporaryAccount);
+                throw new NoSuchElementException();
             }
             if(temporaryAccount.getAuthCode() != registerRequest.getAuthCode()) {
                 temporaryAccount.incrementUsage();
                 temporaryAccountRepository.save(temporaryAccount);
                 throw new InvalidAuthCodeException();
             }
+
+            PasswordEncoder encoder = context.getBean(SecurityConfig.class).passwordEncoder();
+            Account account = new Account(
+                    temporaryAccount.getEmail(),
+                    encoder.encode(registerRequest.getPassword()),
+                    temporaryAccount.getName(),
+                    temporaryAccount.getCountryCode(),
+                    temporaryAccount.getRoles()
+            );
+            accountRepository.save(account);
+            temporaryAccountRepository.delete(temporaryAccount);
+            return ResponseEntity.ok("Account created");
         } catch (NoSuchElementException | InvalidAuthCodeException e) {
             return ResponseEntity.badRequest().body("No such account was found");
         }
-        return null;
-        //TODO : finir register
     }
 }

@@ -33,7 +33,7 @@ public class SecurityConfig{
         http
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests((auth) ->
-                        auth.requestMatchers(HttpMethod.POST,"*/login", "/register").permitAll()
+                        auth.requestMatchers(HttpMethod.POST,"*/login", "*/register").permitAll()
                                 .requestMatchers("/create-account").hasRole("ADMIN")
                                 .requestMatchers("/test").authenticated()
                 ).csrf((csrf) ->

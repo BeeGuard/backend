@@ -9,6 +9,7 @@ import java.util.UUID;
 @Entity
 @Data
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Table(name = "account")
 public class Account {
 
