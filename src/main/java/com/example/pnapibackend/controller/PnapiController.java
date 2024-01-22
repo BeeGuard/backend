@@ -7,6 +7,7 @@ import com.example.pnapibackend.data.repository.AccountRepository;
 import com.example.pnapibackend.data.repository.RoleRepository;
 import com.example.pnapibackend.data.repository.TemporaryAccountRepository;
 import com.example.pnapibackend.model.createaccount.CreateAccountRequest;
+import com.example.pnapibackend.model.createaccount.CreateAccountResponse;
 import com.example.pnapibackend.model.generic.SimpleMessageResponse;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.service.TemporaryAccountService;
@@ -59,18 +60,27 @@ public class PnapiController {
                     .body(new SimpleMessageResponse("User already have an account or a temporary account"));
         }
 
+        LocalDateTime validity = LocalDateTime.now().plusDays(7);
+        int authCode = temporaryAccountService.generateAuthNumber();
+
         TemporaryAccount temporaryAccount = new TemporaryAccount(
                 createAccountRequest.getEmail(),
                 createAccountRequest.getName(),
                 createAccountRequest.getCountryCode(),
-                temporaryAccountService.generateAuthNumber(),
-                LocalDateTime.now().plusDays(7),
+                authCode,
+                validity,
+                0,
                 createAccountRequest.getRoles().stream().map(e -> roleRepository.findByName(e).orElseThrow()).toList()
         );
 
         temporaryAccountRepository.save(temporaryAccount);
 
-        return ResponseEntity.ok().body("User created");
+        return ResponseEntity.ok().body(new CreateAccountResponse(
+                createAccountRequest.getEmail(),
+                validity,
+                authCode,
+                createAccountRequest.getName()
+        ));
     }
 
 }

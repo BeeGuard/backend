@@ -35,6 +35,10 @@ public class TemporaryAccount {
     private LocalDateTime expiration;
 
     @NonNull
+    @Column(name = "usage")
+    private int usage;
+
+    @NonNull
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "temp_account_roles",
