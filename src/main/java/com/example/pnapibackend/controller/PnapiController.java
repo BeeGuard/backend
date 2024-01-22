@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -130,7 +131,7 @@ public class PnapiController {
                     encoder.encode(registerRequest.getPassword()),
                     temporaryAccount.getName(),
                     temporaryAccount.getCountryCode(),
-                    temporaryAccount.getRoles()
+                    new HashSet<>(temporaryAccount.getRoles())
             );
             log.info("Creating account");
             accountRepository.save(account);
