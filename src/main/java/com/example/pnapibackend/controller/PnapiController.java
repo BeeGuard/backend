@@ -14,6 +14,8 @@ import com.example.pnapibackend.model.generic.SimpleMessageResponse;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.register.RegisterRequest;
 import com.example.pnapibackend.service.TemporaryAccountService;
+import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpEntity;
@@ -32,6 +34,7 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("api/")
+@Slf4j
 public class PnapiController {
 
     private AccountRepository accountRepository;
@@ -100,21 +103,27 @@ public class PnapiController {
 
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> registerAccount(@RequestBody RegisterRequest registerRequest) {
+        log.info("aaaaaaaaaaaaaaaaaaaaaa");
         try {
             TemporaryAccount temporaryAccount = temporaryAccountRepository
                     .findTemporaryAccountByEmail(registerRequest.getEmail()).orElseThrow();
+            log.info("User " + registerRequest.getEmail() + " successfully retrieve");
 
-            if(temporaryAccount.getExpiration().isAfter(LocalDateTime.now())
+            if(temporaryAccount.getExpiration().isBefore(LocalDateTime.now())
                     || temporaryAccount.getUsage() >= MAX_USAGE) {
+                log.info("The account is no longer valid");
                 temporaryAccountRepository.delete(temporaryAccount);
                 throw new NoSuchElementException();
             }
             if(temporaryAccount.getAuthCode() != registerRequest.getAuthCode()) {
+                log.info("expected " + temporaryAccount.getAuthCode() + " received : " + registerRequest.getAuthCode());
+                log.info("Bad authCode enter for account " + temporaryAccount.getEmail());
                 temporaryAccount.incrementUsage();
                 temporaryAccountRepository.save(temporaryAccount);
                 throw new InvalidAuthCodeException();
             }
 
+            log.info("Creating account for " + temporaryAccount.getEmail());
             PasswordEncoder encoder = context.getBean(SecurityConfig.class).passwordEncoder();
             Account account = new Account(
                     temporaryAccount.getEmail(),
@@ -123,8 +132,11 @@ public class PnapiController {
                     temporaryAccount.getCountryCode(),
                     temporaryAccount.getRoles()
             );
+            log.info("Creating account");
             accountRepository.save(account);
+            log.info("Account successfully created for " + account.getEmail());
             temporaryAccountRepository.delete(temporaryAccount);
+            log.info("Temporary account successfully deleted for " + account.getEmail());
             return ResponseEntity.ok("Account created");
         } catch (NoSuchElementException | InvalidAuthCodeException e) {
             return ResponseEntity.badRequest().body("No such account was found");

@@ -34,7 +34,7 @@ public class Account {
     private String countryCode;
 
     @NonNull
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
             name = "account_roles",
             joinColumns = @JoinColumn(name = "account_id"),

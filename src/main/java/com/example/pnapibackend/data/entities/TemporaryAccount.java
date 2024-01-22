@@ -2,7 +2,9 @@ package com.example.pnapibackend.data.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -12,6 +14,8 @@ import java.util.Set;
 @Entity
 @Data
 @Table(name = "temporary_account")
+@NoArgsConstructor
+@RequiredArgsConstructor
 public class TemporaryAccount {
     @Id
     @Column(name = "email", unique = true)
@@ -39,7 +43,7 @@ public class TemporaryAccount {
     private int usage;
 
     @NonNull
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
             name = "temp_account_roles",
             joinColumns = @JoinColumn(name = "account_id"),
