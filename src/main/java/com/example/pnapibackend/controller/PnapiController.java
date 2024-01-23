@@ -12,7 +12,10 @@ import com.example.pnapibackend.model.createaccount.CreateAccountRequest;
 import com.example.pnapibackend.model.createaccount.CreateAccountResponse;
 import com.example.pnapibackend.model.generic.SimpleMessageResponse;
 import com.example.pnapibackend.model.login.LoginRequest;
+import com.example.pnapibackend.model.login.LoginResponse;
 import com.example.pnapibackend.model.register.RegisterRequest;
+import com.example.pnapibackend.security.jwt.JwtTokenProvider;
+import com.example.pnapibackend.security.service.UserDetailsImpl;
 import com.example.pnapibackend.service.TemporaryAccountService;
 import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/")
@@ -45,6 +54,8 @@ public class PnapiController {
     private final int MAX_USAGE;
 
     private ApplicationContext context;
+    private AuthenticationManager authenticationManager;
+    private JwtTokenProvider jwtTokenProvider;
 
 
     public PnapiController(
@@ -53,8 +64,9 @@ public class PnapiController {
             TemporaryAccountService temporaryAccountService,
             RoleRepository roleRepository,
             @Value("${app.temporary_account.MAX_USAGE}") int maxUsage,
-            ApplicationContext applicationContext
-
+            ApplicationContext applicationContext,
+            AuthenticationManager authenticationManager,
+            JwtTokenProvider jwtTokenProvider
     ){
         this.accountRepository = accountRepository;
         this.temporaryAccountRepository = temporaryAccountRepository;
@@ -62,13 +74,29 @@ public class PnapiController {
         this.roleRepository = roleRepository;
         this.MAX_USAGE = maxUsage;
         this.context = applicationContext;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return ResponseEntity.ok().body("User logged in successfully");
+        String jwt = jwtTokenProvider.generateToken(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new LoginResponse(jwt,
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                roles));
     }
 
     @PostMapping(value = "/create-account", consumes = MediaType.APPLICATION_JSON_VALUE)

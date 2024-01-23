@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class LoginResponse {
@@ -13,7 +14,7 @@ public class LoginResponse {
     private String type = "Bearer";
 
     @NonNull
-    private Long id;
+    private UUID id;
 
     @NonNull
     private String username;
