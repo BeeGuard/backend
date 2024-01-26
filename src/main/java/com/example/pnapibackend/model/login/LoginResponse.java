@@ -14,9 +14,6 @@ public class LoginResponse {
     private String type = "Bearer";
 
     @NonNull
-    private UUID id;
-
-    @NonNull
     private String username;
 
     @NonNull

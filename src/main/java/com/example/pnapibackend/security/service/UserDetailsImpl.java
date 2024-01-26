@@ -14,25 +14,19 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Getter
 @AllArgsConstructor
 public class UserDetailsImpl implements UserDetails {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @Getter
-    private UUID id;
-
-    @Getter
     private String username;
 
-    @Getter
     private String email;
 
-    @Getter
     @JsonIgnore
     private String password;
 
-    @Getter
     private Collection<? extends GrantedAuthority> authorities;
 
 
@@ -62,7 +56,6 @@ public class UserDetailsImpl implements UserDetails {
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(
-                user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getPassword(),

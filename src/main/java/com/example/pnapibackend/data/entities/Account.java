@@ -14,9 +14,6 @@ import java.util.UUID;
 public class Account {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
     @NonNull
     @Column(unique = true, name = "email")
     private String email;

@@ -12,6 +12,9 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -22,10 +25,11 @@ public class JwtTokenProvider {
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
 
-    final private Password privateKey;
+    final private SecretKey privateKey;
 
     public JwtTokenProvider(@Value("${app.jwtSecret}") String jwtSecret) {
-        privateKey = Keys.password(jwtSecret.toCharArray());
+        byte[] keyBytes = Arrays.copyOf(jwtSecret.getBytes(StandardCharsets.UTF_8), 64); // Ensure 64 bytes
+        privateKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(Authentication authentication) {
@@ -35,37 +39,38 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .subject(userPrincipal.getId().toString())
+                .subject(userPrincipal.getEmail())
                 .issuedAt(new Date())
                 .expiration(expiryDate)
                 .signWith(privateKey, Jwts.SIG.HS512)
                 .compact();
     }
 
-    public UUID getUserIdFromJWT(String token) {
+    public String getUserIdFromJWT(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(privateKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return UUID.fromString(claims.getSubject());
+        return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().decryptWith(privateKey).build().parseSignedClaims(authToken);
+            Jwts.parser().verifyWith(privateKey).build().parseSignedClaims(authToken);
+            log.info("Token validated");
             return true;
         } catch (SignatureException ex) {
-            log.log(Level.DEBUG, "Error while verifying signature");
+            log.log(Level.INFO, "Error while verifying signature");
         } catch (MalformedJwtException ex) {
-            log.log(Level.DEBUG, "Malformed Jwt");
+            log.log(Level.INFO, "Malformed Jwt");
         } catch (ExpiredJwtException ex) {
-            log.log(Level.DEBUG, "Session expired");
+            log.log(Level.INFO, "Session expired");
         } catch (UnsupportedJwtException ex) {
-            log.log(Level.DEBUG, "Unsupported JWT");
+            log.log(Level.INFO, "Unsupported JWT");
         } catch (IllegalArgumentException ex) {
-            log.log(Level.DEBUG, "Unknown error while parsing JWT");
+            log.log(Level.INFO, "Unknown error while parsing JWT");
         }
         return false;
     }
