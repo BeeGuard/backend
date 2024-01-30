@@ -41,8 +41,19 @@ public class SecurityConfig{
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests((auth) ->
-                        auth.requestMatchers(HttpMethod.POST,"*/login", "*/register").permitAll()
-                                .requestMatchers(HttpMethod.GET,"/swagger-ui/*", "/api-docs/swagger-config", "/api-docs").permitAll()
+                        auth
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "*/login",
+                                        "*/register"
+                                ).permitAll()
+                                .requestMatchers(
+                                        HttpMethod.GET,
+                                        "/swagger-ui.html",
+                                        "/swagger-ui/*",
+                                        "/api-docs/swagger-config",
+                                        "/api-docs"
+                                ).permitAll()
                                 .requestMatchers("*/create-account").hasRole("ADMIN")
                                 .requestMatchers("*/test").authenticated()
                 ).csrf((csrf) ->
