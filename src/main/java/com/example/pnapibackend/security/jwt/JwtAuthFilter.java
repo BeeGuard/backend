@@ -20,9 +20,9 @@ import java.util.UUID;
 @Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    private UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     public JwtAuthFilter(JwtTokenProvider tokenProvider, UserDetailsServiceImpl userDetailsService) {
         this.jwtTokenProvider = tokenProvider;
