@@ -59,7 +59,6 @@ public class JwtTokenProvider {
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser().verifyWith(privateKey).build().parseSignedClaims(authToken);
-            log.info("Token validated");
             return true;
         } catch (SignatureException ex) {
             log.log(Level.INFO, "Error while verifying signature");
