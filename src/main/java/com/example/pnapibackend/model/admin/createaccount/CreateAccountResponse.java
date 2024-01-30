@@ -1,4 +1,4 @@
-package com.example.pnapibackend.model.createaccount;
+package com.example.pnapibackend.model.admin.createaccount;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

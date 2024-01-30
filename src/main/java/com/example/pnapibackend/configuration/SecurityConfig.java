@@ -44,8 +44,8 @@ public class SecurityConfig{
                         auth
                                 .requestMatchers(
                                         HttpMethod.POST,
-                                        "*/login",
-                                        "*/register"
+                                        "/api/app/login",
+                                        "/api/app/register"
                                 ).permitAll()
                                 .requestMatchers(
                                         HttpMethod.GET,
@@ -54,10 +54,10 @@ public class SecurityConfig{
                                         "/api-docs/swagger-config",
                                         "/api-docs"
                                 ).permitAll()
-                                .requestMatchers("*/create-account").hasRole("ADMIN")
-                                .requestMatchers("*/test").authenticated()
+                                .requestMatchers("/api/admin/*").hasRole("ADMIN")
+                                .requestMatchers("/api/app/*").authenticated()
                 ).csrf((csrf) ->
-                csrf.ignoringRequestMatchers("/api/*")
+                csrf.ignoringRequestMatchers("api/app/*", "api/admin/*")
         );
         return http.build();
     }
