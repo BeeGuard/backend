@@ -9,4 +9,6 @@ public interface TemporaryAccountRepository extends JpaRepository<TemporaryAccou
     public boolean existsByEmail(String email);
 
     Optional<TemporaryAccount> findTemporaryAccountByEmail(String email);
+
+    void deleteTemporaryAccountByEmail(String email);
 }

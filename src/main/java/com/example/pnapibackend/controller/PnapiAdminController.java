@@ -10,6 +10,7 @@ import com.example.pnapibackend.model.admin.account.GetAccountRequest;
 import com.example.pnapibackend.model.admin.account.GetAccountResponse;
 import com.example.pnapibackend.model.admin.createaccount.CreateAccountRequest;
 import com.example.pnapibackend.model.admin.createaccount.CreateAccountResponse;
+import com.example.pnapibackend.model.admin.deleteaccount.DeleteAccountRequest;
 import com.example.pnapibackend.model.admin.tempaccount.GetTempAccountResponse;
 import com.example.pnapibackend.model.admin.tempaccount.TempAccountResponse;
 import com.example.pnapibackend.model.generic.SimpleMessageResponse;
@@ -100,5 +101,17 @@ public class PnapiAdminController {
                         getAccountRequest.page()
                 )
         );
+    }
+
+    @DeleteMapping(value = "/delete-temp-account", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> deleteTemporaryAccount(@RequestBody DeleteAccountRequest deleteAccountRequest) {
+        temporaryAccountRepository.deleteTemporaryAccountByEmail(deleteAccountRequest.email());
+        return ResponseEntity.ok("Account successfully deleted");
+    }
+
+    @DeleteMapping(value = "/delete-account", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> deleteAccount(@RequestBody DeleteAccountRequest deleteAccountRequest) {
+        accountRepository.deleteAccountByEmail(deleteAccountRequest.email());
+        return ResponseEntity.ok("Account successfully deleted");
     }
 }
