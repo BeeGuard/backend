@@ -58,6 +58,7 @@ public class SecurityConfig{
                                 ).permitAll()
                                 .requestMatchers("/api/admin/*").hasRole("ADMIN")
                                 .requestMatchers("/api/app/*").authenticated()
+                                .requestMatchers("/api/hive/*").authenticated()
                 ).cors(Customizer.withDefaults())
                 .csrf((csrf) ->
                 csrf.ignoringRequestMatchers("api/app/*", "api/admin/*"));

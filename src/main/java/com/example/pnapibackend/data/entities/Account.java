@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -39,7 +40,17 @@ public class Account {
     )
     private Collection<Role> roles;
 
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Hive> hives;
+
     private void setId(){
         //do nothing
+    }
+
+    public boolean equals(Object object) {
+        if (object instanceof Account account) {
+            return account.getEmail().equals(this.getEmail());
+        }
+        return false;
     }
 }

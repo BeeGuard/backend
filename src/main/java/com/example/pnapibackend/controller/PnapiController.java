@@ -2,10 +2,14 @@ package com.example.pnapibackend.controller;
 
 import com.example.pnapibackend.configuration.SecurityConfig;
 import com.example.pnapibackend.data.entities.Account;
+import com.example.pnapibackend.data.entities.Hive;
 import com.example.pnapibackend.data.entities.TemporaryAccount;
 import com.example.pnapibackend.data.repository.AccountRepository;
+import com.example.pnapibackend.data.repository.HiveRepository;
 import com.example.pnapibackend.data.repository.TemporaryAccountRepository;
+import com.example.pnapibackend.exceptions.AccountDoesNotExists;
 import com.example.pnapibackend.exceptions.InvalidAuthCodeException;
+import com.example.pnapibackend.model.hive.create.CreateHiveResponse;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.login.LoginResponse;
 import com.example.pnapibackend.model.register.RegisterRequest;
@@ -39,6 +43,7 @@ public class PnapiController {
 
     private AccountRepository accountRepository;
     private TemporaryAccountRepository temporaryAccountRepository;
+    private HiveRepository hiveRepository;
     private final int MAX_USAGE;
 
     private ApplicationContext context;
@@ -52,7 +57,8 @@ public class PnapiController {
             @Value("${app.temporary_account.MAX_USAGE}") int maxUsage,
             ApplicationContext applicationContext,
             AuthenticationManager authenticationManager,
-            JwtTokenProvider jwtTokenProvider
+            JwtTokenProvider jwtTokenProvider,
+            HiveRepository hiveRepository
     ){
         this.accountRepository = accountRepository;
         this.temporaryAccountRepository = temporaryAccountRepository;
@@ -60,6 +66,7 @@ public class PnapiController {
         this.context = applicationContext;
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.hiveRepository = hiveRepository;
     }
 
 
@@ -114,6 +121,31 @@ public class PnapiController {
         } catch (NoSuchElementException | InvalidAuthCodeException e) {
             return ResponseEntity.badRequest().body("No such account was found");
         }
+    }
+
+    @PostMapping("/create-hive")
+    public ResponseEntity<?> createHive() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+        }
+        if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+            try{
+                Account account = accountRepository.findByEmail(userDetails.getEmail()).orElseThrow(
+                        AccountDoesNotExists::new
+                );
+
+                Hive hive = new Hive(account);
+                hiveRepository.save(hive);
+
+                //generate response
+                return ResponseEntity.ok(CreateHiveResponse.getFromHive(hive));
+            }catch (AccountDoesNotExists e) {
+                return ResponseEntity.internalServerError().body("");
+            }
+
+        }
+        return ResponseEntity.badRequest().body("");
     }
 
     @GetMapping(value = "/test")
