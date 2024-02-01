@@ -33,20 +33,20 @@ public class Hive {
     private List<TimestampInfo> timestampInfos;
 
     @Column(name="temperature_lower_threshold")
-    private float tempLowerThreshold;
+    private Float tempLowerThreshold;
 
     @Column(name="temperature_upper_threshold")
-    private float tempUpperThreshold;
+    private Float tempUpperThreshold;
 
     @Column(name="weight_lower_threshold")
-    private float weightLowerThreshold;
+    private Float weightLowerThreshold;
 
     @Column(name="weight_upper_threshold")
-    private float weightUpperThreshold;
+    private Float weightUpperThreshold;
 
     @Column(name="humidity_lower_threshold")
-    private float humidityLowerThreshold;
+    private Float humidityLowerThreshold;
 
     @Column(name="humidity_upper_threshold")
-    private float humidityUpperThreshold;
+    private Float humidityUpperThreshold;
 }

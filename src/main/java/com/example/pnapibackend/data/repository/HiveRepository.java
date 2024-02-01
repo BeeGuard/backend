@@ -13,5 +13,5 @@ public interface HiveRepository extends JpaRepository<Hive, UUID> {
 
     List<Hive> findByAccount(Account account);
 
-    Page<Hive> findAllByAccount_Email(String accountEmail, Pageable pageable);
+    List<Hive> findAllByAccount_Email(String accountEmail);
 }

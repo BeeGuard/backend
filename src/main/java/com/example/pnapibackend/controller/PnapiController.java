@@ -9,6 +9,7 @@ import com.example.pnapibackend.data.repository.TimestampInfoRepository;
 import com.example.pnapibackend.exceptions.AccountDoesNotExistsException;
 import com.example.pnapibackend.exceptions.HiveNotFoundException;
 import com.example.pnapibackend.exceptions.InvalidAuthCodeException;
+import com.example.pnapibackend.model.hive.GetHiveResponse;
 import com.example.pnapibackend.model.hive.create.CreateHiveRequest;
 import com.example.pnapibackend.model.hive.create.CreateHiveResponse;
 import com.example.pnapibackend.model.hive.threshold.SetThresholdRequest;
@@ -197,15 +198,7 @@ public class PnapiController {
             Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
             TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
                     .orElseThrow(HiveNotFoundException::new);
-            return ResponseEntity.ok(new TimestampInfoResponse(latest.getId(),
-                    hive.getName(),
-                    latest.getTime(),
-                    latest.getInteriorHumidity(),
-                    latest.getExteriorHumidity(),
-                    latest.getInteriorTemperature(),
-                    latest.getExteriorTemperature(),
-                    latest.getWeight(),
-                    latest.getUvIndex()));
+            return ResponseEntity.ok(TimestampInfoResponse.getInstance(hive, latest));
         } catch(EntityNotFoundException | IllegalArgumentException | HiveNotFoundException e) {
             return ResponseEntity.badRequest().body("Hive not found.");
         }
@@ -218,7 +211,18 @@ public class PnapiController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
         }
         if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
-
+            List<Hive> hives = hiveRepository.findAllByAccount_Email(userDetails.getEmail());
+            List<GetHiveResponse> getHiveResponses = hives.stream()
+                    .map(hive -> {
+                        TimestampInfo latest = null;
+                        try {
+                            latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
+                                    .orElseThrow(HiveNotFoundException::new);
+                        } catch (HiveNotFoundException ignored) {}
+                        return GetHiveResponse.getInstance(hive, latest);
+                    })
+                    .toList();
+            return ResponseEntity.ok(getHiveResponses);
         }
         return ResponseEntity.badRequest().body("No account found");
     }

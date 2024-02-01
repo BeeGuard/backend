@@ -56,9 +56,9 @@ public class SecurityConfig{
                                         "/api-docs/swagger-config",
                                         "/api-docs"
                                 ).permitAll()
-                                .requestMatchers("/api/admin/*").hasRole("ADMIN")
-                                .requestMatchers("/api/app/*").authenticated()
-                                .requestMatchers("/api/hive/*").authenticated()
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/app/**").authenticated()
+                                .requestMatchers("/api/hive/**").authenticated()
                 ).cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable);
         return http.build();
