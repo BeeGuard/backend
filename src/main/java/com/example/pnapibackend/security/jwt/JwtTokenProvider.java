@@ -1,5 +1,6 @@
 package com.example.pnapibackend.security.jwt;
 
+import com.example.pnapibackend.data.entities.Account;
 import com.example.pnapibackend.security.service.UserDetailsImpl;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.Password;
@@ -40,6 +41,18 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(userPrincipal.getEmail())
+                .issuedAt(new Date())
+                .expiration(expiryDate)
+                .signWith(privateKey, Jwts.SIG.HS512)
+                .compact();
+    }
+
+    public String generateToken(Account account) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+
+        return Jwts.builder()
+                .subject(account.getEmail())
                 .issuedAt(new Date())
                 .expiration(expiryDate)
                 .signWith(privateKey, Jwts.SIG.HS512)

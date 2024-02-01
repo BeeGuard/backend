@@ -3,6 +3,7 @@ package com.example.pnapibackend.controller;
 import com.example.pnapibackend.configuration.SecurityConfig;
 import com.example.pnapibackend.data.entities.Account;
 import com.example.pnapibackend.data.entities.Hive;
+import com.example.pnapibackend.data.entities.Role;
 import com.example.pnapibackend.data.entities.TemporaryAccount;
 import com.example.pnapibackend.data.repository.AccountRepository;
 import com.example.pnapibackend.data.repository.HiveRepository;
@@ -116,8 +117,14 @@ public class PnapiController {
             );
             accountRepository.save(account);
             temporaryAccountRepository.delete(temporaryAccount);
+
+            String jwt = jwtTokenProvider.generateToken(account);
+
             log.info("Temporary account successfully deleted for " + account.getEmail());
-            return ResponseEntity.ok("Account created");
+            return ResponseEntity.ok().body(new LoginResponse(jwt,
+                    account.getName(),
+                    account.getEmail(),
+                    account.getRoles().stream().map(Role::getName).toList()));
         } catch (NoSuchElementException | InvalidAuthCodeException e) {
             return ResponseEntity.badRequest().body("No such account was found");
         }
