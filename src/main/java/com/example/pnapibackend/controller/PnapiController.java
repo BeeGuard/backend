@@ -196,6 +196,18 @@ public class PnapiController {
     public ResponseEntity<?> getHiveFromID(@PathVariable("hiveId") String hiveId) {
         try {
             Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
+
+            Authentication authentication = SecurityContextHolder.createEmptyContext().getAuthentication();
+            if(authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+            }
+            if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+                if (!hive.getAccount().getEmail().equals(userDetails.getEmail()) &&
+                        userDetails.getAuthorities().stream().noneMatch(grantedAuthority -> grantedAuthority.getAuthority().toUpperCase().contains("ADMIN"))) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You didn't own this hive");
+                }
+            }
+
             TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
                     .orElseThrow(HiveNotFoundException::new);
             return ResponseEntity.ok(TimestampInfoResponse.getInstance(hive, latest));
