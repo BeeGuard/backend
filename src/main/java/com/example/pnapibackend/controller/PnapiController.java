@@ -192,7 +192,7 @@ public class PnapiController {
         }
     }
 
-    @GetMapping(value = "/hive-from-id/{hiveId}")
+    @GetMapping(value = "/hive/{hiveId}")
     public ResponseEntity<?> getHiveFromID(@PathVariable("hiveId") String hiveId) {
         try {
             Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
