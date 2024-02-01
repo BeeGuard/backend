@@ -164,7 +164,7 @@ public class PnapiController {
         return ResponseEntity.badRequest().body("");
     }
 
-    @GetMapping(value = "/set-thresholds")
+    @PostMapping(value = "/set-thresholds")
     public ResponseEntity<?> setThreshold(@RequestBody SetThresholdRequest setThresholdRequest) {
         try {
             Hive hive = hiveRepository.getReferenceById(UUID.fromString(setThresholdRequest.id()));
