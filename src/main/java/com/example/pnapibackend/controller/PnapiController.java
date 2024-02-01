@@ -197,7 +197,7 @@ public class PnapiController {
         try {
             Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
 
-            Authentication authentication = SecurityContextHolder.createEmptyContext().getAuthentication();
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
             }
