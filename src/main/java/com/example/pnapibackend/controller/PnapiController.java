@@ -210,7 +210,7 @@ public class PnapiController {
 
             TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
                     .orElseThrow(HiveNotFoundException::new);
-            return ResponseEntity.ok(TimestampInfoResponse.getInstance(hive, latest));
+            return ResponseEntity.ok(GetHiveResponse.getInstance(hive, latest));
         } catch(EntityNotFoundException | IllegalArgumentException | HiveNotFoundException e) {
             return ResponseEntity.badRequest().body("Hive not found.");
         }
