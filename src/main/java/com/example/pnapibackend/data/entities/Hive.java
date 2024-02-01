@@ -21,10 +21,32 @@ public class Hive {
     private UUID id;
 
     @NonNull
+    @Column(name = "name")
+    private String name;
+
+    @NonNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "email")
     private Account account;
 
     @OneToMany(mappedBy = "hive", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TimestampInfo> timestampInfos;
+
+    @Column(name="temperature_lower_threshold")
+    private float tempLowerThreshold;
+
+    @Column(name="temperature_upper_threshold")
+    private float tempUpperThreshold;
+
+    @Column(name="weight_lower_threshold")
+    private float weightLowerThreshold;
+
+    @Column(name="weight_upper_threshold")
+    private float weightUpperThreshold;
+
+    @Column(name="humidity_lower_threshold")
+    private float humidityLowerThreshold;
+
+    @Column(name="humidity_upper_threshold")
+    private float humidityUpperThreshold;
 }

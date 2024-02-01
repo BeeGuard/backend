@@ -9,12 +9,15 @@ import com.example.pnapibackend.data.repository.HiveRepository;
 import com.example.pnapibackend.data.repository.TemporaryAccountRepository;
 import com.example.pnapibackend.exceptions.AccountDoesNotExists;
 import com.example.pnapibackend.exceptions.InvalidAuthCodeException;
+import com.example.pnapibackend.model.hive.create.CreateHiveRequest;
 import com.example.pnapibackend.model.hive.create.CreateHiveResponse;
+import com.example.pnapibackend.model.hive.threshold.SetThresholdRequest;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.login.LoginResponse;
 import com.example.pnapibackend.model.register.RegisterRequest;
 import com.example.pnapibackend.security.jwt.JwtTokenProvider;
 import com.example.pnapibackend.security.service.UserDetailsImpl;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -29,11 +32,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -124,7 +127,7 @@ public class PnapiController {
     }
 
     @PostMapping("/create-hive")
-    public ResponseEntity<?> createHive() {
+    public ResponseEntity<?> createHive(@RequestBody CreateHiveRequest createHiveRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
@@ -135,7 +138,7 @@ public class PnapiController {
                         AccountDoesNotExists::new
                 );
 
-                Hive hive = new Hive(account);
+                Hive hive = new Hive(createHiveRequest.name(), account);
                 hiveRepository.save(hive);
 
                 //generate response
@@ -159,5 +162,22 @@ public class PnapiController {
             return ResponseEntity.ok("Welcome " + userDetails.getUsername() + ". Your email is : " + userDetails.getEmail());
         }
         return ResponseEntity.badRequest().body("");
+    }
+
+    @GetMapping(value = "/set-thresholds")
+    public ResponseEntity<?> setThreshold(@RequestBody SetThresholdRequest setThresholdRequest) {
+        try {
+            Hive hive = hiveRepository.getReferenceById(UUID.fromString(setThresholdRequest.id()));
+            hive.setTempLowerThreshold(setThresholdRequest.lowerTemp());
+            hive.setTempUpperThreshold(setThresholdRequest.upperTemp());
+            hive.setHumidityLowerThreshold(setThresholdRequest.lowerHumidity());
+            hive.setHumidityUpperThreshold(setThresholdRequest.upperHumidity());
+            hive.setWeightLowerThreshold(setThresholdRequest.lowerWeight());
+            hive.setWeightUpperThreshold(setThresholdRequest.upperWeight());
+            hiveRepository.save(hive);
+            return ResponseEntity.ok("Thresholds updated.");
+        } catch(EntityNotFoundException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Hive not found.");
+        }
     }
 }
