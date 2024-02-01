@@ -6,8 +6,8 @@ import com.example.pnapibackend.data.entities.TimestampInfo;
 import com.example.pnapibackend.data.repository.AccountRepository;
 import com.example.pnapibackend.data.repository.HiveRepository;
 import com.example.pnapibackend.data.repository.TimestampInfoRepository;
-import com.example.pnapibackend.exceptions.AccountDoesNotExists;
-import com.example.pnapibackend.exceptions.UnauthorizeHiveRights;
+import com.example.pnapibackend.exceptions.AccountDoesNotExistsException;
+import com.example.pnapibackend.exceptions.UnauthorizeHiveRightsException;
 import com.example.pnapibackend.model.timestampinfos.HiveDataRequest;
 import com.example.pnapibackend.model.timestampinfos.TimestampInfosRequest;
 import com.example.pnapibackend.security.service.UserDetailsImpl;
@@ -52,11 +52,11 @@ public class PnapiHiveController {
         if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
             try {
                 Account account = accountRepository.findAccountByEmail(userDetails.getEmail())
-                        .orElseThrow(AccountDoesNotExists::new);
+                        .orElseThrow(AccountDoesNotExistsException::new);
 
                 Hive hive = hiveRepository.getReferenceById(UUID.fromString(dataRequest.ID()));
                 if (!hive.getAccount().equals(account)) {
-                    throw new UnauthorizeHiveRights();
+                    throw new UnauthorizeHiveRightsException();
                 }
 
                 if (!dataRequest.d().isEmpty()) {
@@ -73,13 +73,13 @@ public class PnapiHiveController {
                     }
                 }
                 return ResponseEntity.ok("Data added");
-            } catch (AccountDoesNotExists e) {
+            } catch (AccountDoesNotExistsException e) {
                 return ResponseEntity.internalServerError().body("");
             } catch (EntityNotFoundException e) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                         "No hive with this id"
                 );
-            } catch (UnauthorizeHiveRights e) {
+            } catch (UnauthorizeHiveRightsException e) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                         "This user cannot push info on this hive"
                 );

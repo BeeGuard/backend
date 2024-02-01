@@ -1,14 +1,13 @@
 package com.example.pnapibackend.controller;
 
 import com.example.pnapibackend.configuration.SecurityConfig;
-import com.example.pnapibackend.data.entities.Account;
-import com.example.pnapibackend.data.entities.Hive;
-import com.example.pnapibackend.data.entities.Role;
-import com.example.pnapibackend.data.entities.TemporaryAccount;
+import com.example.pnapibackend.data.entities.*;
 import com.example.pnapibackend.data.repository.AccountRepository;
 import com.example.pnapibackend.data.repository.HiveRepository;
 import com.example.pnapibackend.data.repository.TemporaryAccountRepository;
-import com.example.pnapibackend.exceptions.AccountDoesNotExists;
+import com.example.pnapibackend.data.repository.TimestampInfoRepository;
+import com.example.pnapibackend.exceptions.AccountDoesNotExistsException;
+import com.example.pnapibackend.exceptions.HiveNotFoundException;
 import com.example.pnapibackend.exceptions.InvalidAuthCodeException;
 import com.example.pnapibackend.model.hive.create.CreateHiveRequest;
 import com.example.pnapibackend.model.hive.create.CreateHiveResponse;
@@ -16,6 +15,7 @@ import com.example.pnapibackend.model.hive.threshold.SetThresholdRequest;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.login.LoginResponse;
 import com.example.pnapibackend.model.register.RegisterRequest;
+import com.example.pnapibackend.model.timestampinfos.TimestampInfoResponse;
 import com.example.pnapibackend.security.jwt.JwtTokenProvider;
 import com.example.pnapibackend.security.service.UserDetailsImpl;
 import jakarta.persistence.EntityNotFoundException;
@@ -53,6 +53,7 @@ public class PnapiController {
     private ApplicationContext context;
     private AuthenticationManager authenticationManager;
     private JwtTokenProvider jwtTokenProvider;
+    private TimestampInfoRepository timestampInfoRepository;
 
 
     public PnapiController(
@@ -62,7 +63,8 @@ public class PnapiController {
             ApplicationContext applicationContext,
             AuthenticationManager authenticationManager,
             JwtTokenProvider jwtTokenProvider,
-            HiveRepository hiveRepository
+            HiveRepository hiveRepository,
+            TimestampInfoRepository timestampInfoRepository
     ){
         this.accountRepository = accountRepository;
         this.temporaryAccountRepository = temporaryAccountRepository;
@@ -71,6 +73,7 @@ public class PnapiController {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.hiveRepository = hiveRepository;
+        this.timestampInfoRepository = timestampInfoRepository;
     }
 
 
@@ -142,7 +145,7 @@ public class PnapiController {
         if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
             try{
                 Account account = accountRepository.findByEmail(userDetails.getEmail()).orElseThrow(
-                        AccountDoesNotExists::new
+                        AccountDoesNotExistsException::new
                 );
 
                 Hive hive = new Hive(createHiveRequest.name(), account);
@@ -150,7 +153,7 @@ public class PnapiController {
 
                 //generate response
                 return ResponseEntity.ok(CreateHiveResponse.getFromHive(hive));
-            }catch (AccountDoesNotExists e) {
+            }catch (AccountDoesNotExistsException e) {
                 return ResponseEntity.internalServerError().body("");
             }
 
@@ -171,10 +174,10 @@ public class PnapiController {
         return ResponseEntity.badRequest().body("");
     }
 
-    @PostMapping(value = "/set-thresholds")
-    public ResponseEntity<?> setThreshold(@RequestBody SetThresholdRequest setThresholdRequest) {
+    @PostMapping(value = "/set-thresholds/{hive-id}")
+    public ResponseEntity<?> setThreshold(@PathVariable(name="hive-id") String hiveId, @RequestBody SetThresholdRequest setThresholdRequest) {
         try {
-            Hive hive = hiveRepository.getReferenceById(UUID.fromString(setThresholdRequest.id()));
+            Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
             hive.setTempLowerThreshold(setThresholdRequest.lowerTemp());
             hive.setTempUpperThreshold(setThresholdRequest.upperTemp());
             hive.setHumidityLowerThreshold(setThresholdRequest.lowerHumidity());
@@ -186,5 +189,37 @@ public class PnapiController {
         } catch(EntityNotFoundException | IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Hive not found.");
         }
+    }
+
+    @GetMapping(value = "/hive-from-id/{hiveId}")
+    public ResponseEntity<?> getHiveFromID(@PathVariable("hiveId") String hiveId) {
+        try {
+            Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
+            TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
+                    .orElseThrow(HiveNotFoundException::new);
+            return ResponseEntity.ok(new TimestampInfoResponse(latest.getId(),
+                    hive.getName(),
+                    latest.getTime(),
+                    latest.getInteriorHumidity(),
+                    latest.getExteriorHumidity(),
+                    latest.getInteriorTemperature(),
+                    latest.getExteriorTemperature(),
+                    latest.getWeight(),
+                    latest.getUvIndex()));
+        } catch(EntityNotFoundException | IllegalArgumentException | HiveNotFoundException e) {
+            return ResponseEntity.badRequest().body("Hive not found.");
+        }
+    }
+
+    @GetMapping(value = "/hives")
+    public ResponseEntity<?> getHivesFromAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+        }
+        if(authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+
+        }
+        return ResponseEntity.badRequest().body("No account found");
     }
 }
