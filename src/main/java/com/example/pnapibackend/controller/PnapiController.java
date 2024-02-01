@@ -194,8 +194,9 @@ public class PnapiController {
 
     @GetMapping(value = "/hive/{hiveId}")
     public ResponseEntity<?> getHiveFromID(@PathVariable("hiveId") String hiveId) {
+        Hive hive = null;
         try {
-            Hive hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
+            hive = hiveRepository.getReferenceById(UUID.fromString(hiveId));
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication == null) {
@@ -211,8 +212,10 @@ public class PnapiController {
             TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
                     .orElseThrow(HiveNotFoundException::new);
             return ResponseEntity.ok(GetHiveResponse.getInstance(hive, latest));
-        } catch(EntityNotFoundException | IllegalArgumentException | HiveNotFoundException e) {
+        } catch(EntityNotFoundException | IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Hive not found.");
+        }catch (HiveNotFoundException e) {
+            return ResponseEntity.ok(GetHiveResponse.getInstance(hive, null));
         }
     }
 
