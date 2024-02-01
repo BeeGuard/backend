@@ -60,8 +60,7 @@ public class SecurityConfig{
                                 .requestMatchers("/api/app/*").authenticated()
                                 .requestMatchers("/api/hive/*").authenticated()
                 ).cors(Customizer.withDefaults())
-                .csrf((csrf) ->
-                csrf.ignoringRequestMatchers("api/app/*", "api/admin/*"));
+                .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

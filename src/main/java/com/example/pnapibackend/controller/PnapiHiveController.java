@@ -72,7 +72,7 @@ public class PnapiHiveController {
                         timestampInfoRepository.save(timestampInfo);
                     }
                 }
-                ResponseEntity.ok("Data added");
+                return ResponseEntity.ok("Data added");
             } catch (AccountDoesNotExists e) {
                 return ResponseEntity.internalServerError().body("");
             } catch (EntityNotFoundException e) {
