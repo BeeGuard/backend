@@ -17,5 +17,5 @@ public interface TimestampInfoRepository extends JpaRepository<TimestampInfo, UU
 
     Page<TimestampInfo> findByHiveAndTimeBefore(Hive hive, LocalDateTime time, Pageable pageable);
 
-    Optional<TimestampInfo> findTopByHiveOrderByTime(Hive hive);
+    Optional<TimestampInfo> findTopByHiveOrderByTimeDesc(Hive hive);
 }

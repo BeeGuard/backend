@@ -16,7 +16,6 @@ import com.example.pnapibackend.model.hive.threshold.SetThresholdRequest;
 import com.example.pnapibackend.model.login.LoginRequest;
 import com.example.pnapibackend.model.login.LoginResponse;
 import com.example.pnapibackend.model.register.RegisterRequest;
-import com.example.pnapibackend.model.timestampinfos.TimestampInfoResponse;
 import com.example.pnapibackend.security.jwt.JwtTokenProvider;
 import com.example.pnapibackend.security.service.UserDetailsImpl;
 import jakarta.persistence.EntityNotFoundException;
@@ -209,7 +208,7 @@ public class PnapiController {
                 }
             }
 
-            TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
+            TimestampInfo latest = timestampInfoRepository.findTopByHiveOrderByTimeDesc(hive)
                     .orElseThrow(HiveNotFoundException::new);
             return ResponseEntity.ok(GetHiveResponse.getInstance(hive, latest));
         } catch(EntityNotFoundException | IllegalArgumentException e) {
@@ -231,7 +230,7 @@ public class PnapiController {
                     .map(hive -> {
                         TimestampInfo latest = null;
                         try {
-                            latest = timestampInfoRepository.findTopByHiveOrderByTime(hive)
+                            latest = timestampInfoRepository.findTopByHiveOrderByTimeDesc(hive)
                                     .orElseThrow(HiveNotFoundException::new);
                         } catch (HiveNotFoundException ignored) {}
                         return GetHiveResponse.getInstance(hive, latest);
